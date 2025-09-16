@@ -1,0 +1,5 @@
+bootdev
+fmt
+staticcheck
+gosec
+docker
