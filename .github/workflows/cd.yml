@@ -26,5 +26,5 @@ jobs:
 
       - name: Build and push the Docker image
         run: |
-          docker build -t veronicalobos/notely:latest .
-          docker push veronicalobos/notely:latest
+          docker build -t veronicalobos87/notely:latest .
+          docker push veronicalobos87/notely:latest
