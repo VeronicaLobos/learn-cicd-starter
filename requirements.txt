@@ -1,4 +1,0 @@
-fmt
-staticcheck
-gosec
-bootdev
