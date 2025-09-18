@@ -1,31 +1,29 @@
-name: Build and Push to Google Artifact Registry
+    name: Build and Push to Google Artifact Registry
 
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    on:
+      push:
+        branches: [ "main" ]
+      workflow_dispatch:
 
-jobs:
-  
-  build-and-push:
+    jobs:
+      build-and-push:
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
+          - name: Authenticate to Google Cloud
+            id: auth
+            uses: 'google-github-actions/auth@v2'
+            with:
+              credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+          - name: Set up Cloud SDK
+            uses: 'google-github-actions/setup-gcloud@v2'
+
+          - name: Build and Push Docker image
+            run: |-
+              gcloud builds submit --tag us-central1-docker.pkg.dev/reliable-proton-472503-j4/notely-ar-repo/notely:${{ github.sha }} .
+              gcloud builds submit --tag us-central1-docker.pkg.dev/reliable-proton-472503-j4/notely-ar-repo/notely:latest .
     
-    runs-on: ubuntu-latest
-
-    steps:
-    
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        
-      - name: Build and Push Docker image
-        run: |-
-          gcloud builds submit --tag us-central1-docker.pkg.dev/reliable-proton-472503-j4/notely-ar-repo/notely:${{ github.sha }} .
-          gcloud builds submit --tag us-central1-docker.pkg.dev/reliable-proton-472503-j4/notely-ar-repo/notely:latest .
