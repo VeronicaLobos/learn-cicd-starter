@@ -1,41 +1,123 @@
+name: CI/CD Pipeline
+
 on:
+  # This workflow triggers on two separate events
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
 
 jobs:
-  deploy:
-    name: Deploy
+  # ----------------------------------------------------------------
+  # CONTINUOUS INTEGRATION - These jobs run on every pull request
+  # ----------------------------------------------------------------
+  tests:
+    name: Tests
+    # This 'if' condition ensures the job only runs on pull request events
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Check out the repository's code so the workflow can access it
       - name: Check out code
         uses: actions/checkout@v4
 
+      # Step 2: Set up the Go programming language environment
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.25.1"
 
+      # Step 3: Run the unit tests and calculate code coverage
+      - name: Run tests
+        run: go test -cover ./...
+
+  style:
+    name: Style
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out the repository's code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.1"
+
+      # Step 3: Check if all Go files are correctly formatted
+      - name: Check format
+        run: test -z $(go fmt ./...)
+
+  security:
+    name: Security
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out the repository's code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.1"
+
+      # Step 3: Install the Gosec security scanner tool
+      - name: Install Gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      # Step 4: Run Gosec to scan the code for security vulnerabilities
+      - name: Run Gosec Security Scanner
+        run: gosec ./...
+
+  # ------------------------------------------------------------------
+  # CONTINUOUS DEPLOYMENT - This job runs only when code is pushed to main
+  # ------------------------------------------------------------------
+  deploy:
+    name: Deploy
+    # This 'if' condition ensures the job only runs on pushes to the main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # This job will only start if all the CI jobs have passed successfully
+    needs: [tests, style, security]
+    steps:
+      # Step 1: Check out the repository's code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the Go programming language environment
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.1"
+
+      # Step 3: Build the Go application binary for a Linux OS
       - name: Build Go application for Linux
         run: GOOS=linux go build -o notely .
 
+      # Step 4: Log in to the Docker Hub container registry
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Step 5: Build the Docker image and push it to Docker Hub
       - name: Build and push the Docker image
         run: |
           docker build -t veronicalobos87/notely:latest .
           docker push veronicalobos87/notely:latest
       
-      # Authenticate to Google Cloud
+      # Step 6: Authenticate to Google Cloud using a Service Account Key
       - name: Authenticate to Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      # Deploy to Cloud Run
+      # Step 7: Deploy the container image from Docker Hub to Google Cloud Run
       - name: Deploy to Cloud Run
         run: >-
           gcloud run deploy notely 
@@ -44,3 +126,4 @@ jobs:
           --allow-unauthenticated 
           --project ${{ secrets.GCP_PROJECT_ID }} 
           --max-instances=4
+          
