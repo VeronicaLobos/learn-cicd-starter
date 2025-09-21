@@ -120,9 +120,10 @@ jobs:
       # Step 7: Run database migrations
       - name: Run database migrations
         env:
-          GOOSE_DRIVER: turso
-          GOOSE_DBSTRING: '${{ secrets.DATABASE_URL }}'
-        run: goose -dir sql/schema up
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          chmod +x ./scripts/migrateup.sh
+          ./scripts/migrateup.sh
 
       # Step 8: Authenticate to Google Cloud using a Service Account Key
       - name: Authenticate to Google Cloud
