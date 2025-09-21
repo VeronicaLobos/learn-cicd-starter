@@ -121,9 +121,7 @@ jobs:
       - name: Run database migrations
         env:
           DATABASE_URL: '${{ secrets.DATABASE_URL }}'
-        run: |
-          chmod +x ./scripts/migrateup.sh
-          ./scripts/migrateup.sh
+        run: goose up
 
       # Step 8: Authenticate to Google Cloud using a Service Account Key
       - name: Authenticate to Google Cloud
