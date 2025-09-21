@@ -16,6 +16,7 @@ jobs:
     # This 'if' condition ensures the job only runs on pull request events
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+
     steps:
       # Step 1: Check out the repository's code so the workflow can access it
       - name: Check out code
@@ -35,6 +36,7 @@ jobs:
     name: Style
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+
     steps:
       # Step 1: Check out the repository's code
       - name: Check out code
@@ -54,6 +56,7 @@ jobs:
     name: Security
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    
     steps:
       # Step 1: Check out the repository's code
       - name: Check out code
@@ -81,8 +84,7 @@ jobs:
     # This 'if' condition ensures the job only runs on pushes to the main branch
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    # This job will only start if all the CI jobs have passed successfully
-    needs: [tests, style, security]
+
     steps:
       # Step 1: Check out the repository's code
       - name: Check out code
@@ -126,4 +128,3 @@ jobs:
           --allow-unauthenticated 
           --project ${{ secrets.GCP_PROJECT_ID }} 
           --max-instances=4
-          
